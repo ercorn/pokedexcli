@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,16 @@ type cliCommand struct {
 type config struct {
 	next string
 	prev string
+}
+
+type location_area struct {
+	Count    int     `json:"count"`
+	Next     *string `json:"next"`
+	Previous *string `json:"previous"`
+	Results  []struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
+	} `json:"results"`
 }
 
 // commands
@@ -76,8 +87,15 @@ func commandMap(c *config) error {
 		return err
 	}
 	//do stuff with the body like unmarshal json into structs (config, etc), placeholder prints body for now
-	fmt.Printf("%s\n", body)
+	//fmt.Printf("%s\n", body)
 	//
+
+	current_location := location_area{}
+	err = json.Unmarshal(body, &current_location)
+	if err != nil {
+		return err
+	}
+	fmt.Println(current_location)
 	return nil
 }
 
