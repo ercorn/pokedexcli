@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -61,11 +63,30 @@ func commandHelp(c *config) error {
 }
 
 func commandMap(c *config) error {
+	res, err := http.Get("https://pokeapi.co/api/v2/location-area/")
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode > 299 {
+		return fmt.Errorf("response failed with status code: %d and \nbody: %s", res.StatusCode, body)
+	}
+	if err != nil {
+		return err
+	}
+	//do stuff with the body like unmarshal json into structs (config, etc), placeholder prints body for now
+	fmt.Printf("%s\n", body)
+	//
 	return nil
 }
 
 func startRepl() {
 	init_commands()
+	user_config := config{
+		next: "",
+		prev: "",
+	}
 	pokedex_scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex > ")
@@ -76,7 +97,7 @@ func startRepl() {
 		}
 		//fmt.Printf("Your command was: %v\n", user_input[0])
 		if _, exists := command_list[user_input[0]]; exists {
-			err := command_list[user_input[0]].callback()
+			err := command_list[user_input[0]].callback(&user_config)
 			if err != nil {
 				fmt.Println(err)
 			}
