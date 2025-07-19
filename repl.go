@@ -17,8 +17,8 @@ type cliCommand struct {
 }
 
 type config struct {
-	next string
-	prev string
+	next     *string
+	previous *string
 }
 
 type location_area struct {
@@ -74,7 +74,7 @@ func commandHelp(c *config) error {
 }
 
 func commandMap(c *config) error {
-	res, err := http.Get("https://pokeapi.co/api/v2/location-area/")
+	res, err := http.Get(*c.next)
 	if err != nil {
 		return err
 	}
@@ -96,14 +96,18 @@ func commandMap(c *config) error {
 		return err
 	}
 	fmt.Println(current_location)
+	fmt.Println(*current_location.Next)
+	c.next = current_location.Next
+	c.previous = current_location.Previous
 	return nil
 }
 
 func startRepl() {
 	init_commands()
+	next_str := "https://pokeapi.co/api/v2/location-area/"
 	user_config := config{
-		next: "",
-		prev: "",
+		next:     &next_str,
+		previous: nil,
 	}
 	pokedex_scanner := bufio.NewScanner(os.Stdin)
 	for {
