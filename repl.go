@@ -51,6 +51,11 @@ func init_commands() {
 			description: "Display the next 20 locations",
 			callback:    commandMap,
 		},
+		"mapb": {
+			name:        "map",
+			description: "Display the previous 20 locations",
+			callback:    commandMapB,
+		},
 	}
 }
 
@@ -86,19 +91,56 @@ func commandMap(c *config) error {
 	if err != nil {
 		return err
 	}
-	//do stuff with the body like unmarshal json into structs (config, etc), placeholder prints body for now
-	//fmt.Printf("%s\n", body)
-	//
 
 	current_location := location_area{}
 	err = json.Unmarshal(body, &current_location)
 	if err != nil {
 		return err
 	}
-	fmt.Println(current_location)
-	fmt.Println(*current_location.Next)
+
 	c.next = current_location.Next
 	c.previous = current_location.Previous
+
+	//print areas
+	for _, result := range current_location.Results {
+		fmt.Println(result.Name)
+	}
+
+	return nil
+}
+
+func commandMapB(c *config) error {
+	if c.previous == nil {
+		return fmt.Errorf("you're on the first page")
+	}
+
+	res, err := http.Get(*c.previous)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if res.StatusCode > 299 {
+		return fmt.Errorf("response failed with status code: %d and \nbody: %s", res.StatusCode, body)
+	}
+	if err != nil {
+		return err
+	}
+
+	current_location := location_area{}
+	err = json.Unmarshal(body, &current_location)
+	if err != nil {
+		return err
+	}
+
+	c.next = current_location.Next
+	c.previous = current_location.Previous
+
+	//print areas
+	for _, result := range current_location.Results {
+		fmt.Println(result.Name)
+	}
+
 	return nil
 }
 
