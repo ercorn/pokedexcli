@@ -17,7 +17,7 @@ type location_area struct {
 	} `json:"results"`
 }
 
-func list_locations(pageURL *string) (location_area, error) {
+func (c *Client) ListLocations(pageURL *string) (location_area, error) {
 	url := "https://pokeapi.co/api/v2/location-area/"
 
 	if pageURL != nil {
