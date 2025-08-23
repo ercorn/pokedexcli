@@ -16,7 +16,7 @@ type cliCommand struct {
 }
 
 type config struct {
-	pokeapiClient pokeapi.Client
+	pokeapiClient *pokeapi.Client
 	next          *string
 	previous      *string
 }
