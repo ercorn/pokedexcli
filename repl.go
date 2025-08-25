@@ -121,8 +121,10 @@ func startRepl(user_cfg *config) {
 			if err != nil {
 				fmt.Println(err)
 			}
+			continue
 		} else {
 			fmt.Println("Unknown command")
+			continue
 		}
 	}
 }

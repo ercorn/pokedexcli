@@ -18,7 +18,7 @@ type location_area struct {
 }
 
 func (c *Client) ListLocations(pageURL *string) (location_area, error) {
-	url := "https://pokeapi.co/api/v2/location-area/"
+	url := "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20"
 
 	if pageURL != nil {
 		url = *pageURL
