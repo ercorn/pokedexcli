@@ -59,7 +59,7 @@ func init_commands() {
 			callback:    commandCatch,
 		},
 		"inspect": {
-			name:        "inspect",
+			name:        "inspect <pokemon_name>",
 			description: "See the detail of a Pokemon you have caught",
 			callback:    commandInspect,
 		},
@@ -194,8 +194,13 @@ func commandInspect(cfg *config, parameter string) error {
 		fmt.Println("Weight:", pokemon.Weight)
 		fmt.Println("Stats:")
 		for _, stat := range pokemon.Stats {
-			fmt.Printf("-%s: %d\n", stat.Stat.Name, stat.BaseStat)
+			fmt.Printf(" - %s: %d\n", stat.Stat.Name, stat.BaseStat)
 		}
+		fmt.Println("Types:")
+		for _, pkmn_type := range pokemon.Types {
+			fmt.Println(" -", pkmn_type.Type.Name)
+		}
+		return nil
 	}
 	return fmt.Errorf("you have not caught that pokemon")
 }
