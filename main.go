@@ -15,6 +15,7 @@ func main() {
 		pokeapiClient: pokeClient,
 		next:          nil,
 		previous:      nil,
+		pokemon_party: make(map[string]pokeapi.Pokemon),
 	}
 
 	startRepl(&user_cfg)

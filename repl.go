@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"strings"
 
@@ -19,6 +20,7 @@ type config struct {
 	pokeapiClient *pokeapi.Client
 	next          *string
 	previous      *string
+	pokemon_party map[string]pokeapi.Pokemon
 }
 
 // commands
@@ -55,6 +57,11 @@ func init_commands() {
 			name:        "catch",
 			description: "catch <pokemon_name>",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "See the detail of a Pokemon you have caught",
+			callback:    commandInspect,
 		},
 	}
 }
@@ -137,6 +144,23 @@ func commandExplore(cfg *config, parameter string) error {
 	return nil
 }
 
+func catchChance(base_experience int) float32 {
+	chance := 100.0 / float32(base_experience+50.0)
+	if chance < 0.05 {
+		chance = 0.05
+	} else if chance > 0.95 {
+		chance = 0.95
+	}
+	return chance
+}
+
+func tryCatch(base_experience int) bool {
+	chance := catchChance(base_experience)
+	r := float32(rand.IntN(base_experience)) / float32(base_experience)
+	fmt.Println("Catch chance is: ", chance, " and r is: ", r, " and base exp is: ", base_experience)
+	return r < chance
+}
+
 func commandCatch(cfg *config, parameter string) error {
 	if parameter == "" {
 		return fmt.Errorf("no <pokemon_name> provided")
@@ -149,8 +173,31 @@ func commandCatch(cfg *config, parameter string) error {
 		return err
 	}
 
-	fmt.Println(pokemon)
+	//fmt.Println(pokemon)
+	fmt.Println("Throwing a Pokeball at", pokemon.Name+"...")
+
+	if tryCatch(pokemon.BaseExperience) {
+		//success
+		cfg.pokemon_party[pokemon.Name] = pokemon
+		fmt.Println(pokemon.Name + " was caught!")
+	} else {
+		fmt.Println(pokemon.Name + " escaped!")
+	}
 	return nil
+}
+
+func commandInspect(cfg *config, parameter string) error {
+	if pokemon, exists := cfg.pokemon_party[parameter]; exists {
+		//list stats
+		fmt.Println("Name:", pokemon.Name)
+		fmt.Println("Height:", pokemon.Height)
+		fmt.Println("Weight:", pokemon.Weight)
+		fmt.Println("Stats:")
+		for _, stat := range pokemon.Stats {
+			fmt.Printf("-%s: %d\n", stat.Stat.Name, stat.BaseStat)
+		}
+	}
+	return fmt.Errorf("you have not caught that pokemon")
 }
 
 func startRepl(user_cfg *config) {
