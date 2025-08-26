@@ -12,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, string) error
 }
 
 type config struct {
@@ -46,6 +46,16 @@ func init_commands() {
 			description: "Display the previous 20 locations",
 			callback:    commandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "List all Pokemon in <area_name>. Usage: 'explore <area_name>' , (ex. 'explore pastoria-city-area')",
+			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "catch <pokemon_name>",
+			callback:    commandCatch,
+		},
 	}
 }
 
@@ -54,13 +64,13 @@ func cleanInput(text string) []string {
 	return output
 }
 
-func commandExit(cfg *config) error {
+func commandExit(cfg *config, parameter string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *config) error {
+func commandHelp(cfg *config, parameter string) error {
 	fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 	for key, value := range command_list {
 		fmt.Printf("%s: %s\n", key, value.description)
@@ -68,7 +78,7 @@ func commandHelp(cfg *config) error {
 	return nil
 }
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, parameter string) error {
 	current_location, err := cfg.pokeapiClient.ListLocations(cfg.next)
 	if err != nil {
 		return err
@@ -85,7 +95,7 @@ func commandMap(cfg *config) error {
 	return nil
 }
 
-func commandMapB(cfg *config) error {
+func commandMapB(cfg *config, parameter string) error {
 	if cfg.previous == nil {
 		return fmt.Errorf("you're on the first page")
 	}
@@ -106,6 +116,43 @@ func commandMapB(cfg *config) error {
 	return nil
 }
 
+func commandExplore(cfg *config, parameter string) error {
+	//Add an explore command. It takes the name of a location area as an argument
+	if parameter == "" {
+		return fmt.Errorf("no <area_name> provided")
+	}
+
+	current_location_area, err := cfg.pokeapiClient.Explore(parameter)
+	if err != nil {
+		return err
+	}
+
+	//parse list of pokemon from location_area endpoint response
+	pokemon_list := current_location_area.PokemonEncounters
+	//print list of pokemon found in this area
+	fmt.Println("Found Pokemon:")
+	for _, pokemon := range pokemon_list {
+		fmt.Println(" - " + pokemon.Pokemon.Name)
+	}
+	return nil
+}
+
+func commandCatch(cfg *config, parameter string) error {
+	if parameter == "" {
+		return fmt.Errorf("no <pokemon_name> provided")
+	}
+
+	//catch a pokemon
+	pokemon, err := cfg.pokeapiClient.GetPokemon(parameter)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(pokemon)
+	return nil
+}
+
 func startRepl(user_cfg *config) {
 	init_commands()
 	pokedex_scanner := bufio.NewScanner(os.Stdin)
@@ -113,15 +160,27 @@ func startRepl(user_cfg *config) {
 		fmt.Print("Pokedex > ")
 		pokedex_scanner.Scan()
 		user_input := cleanInput(pokedex_scanner.Text())
-		if len(user_input) == 0 {
+		input_length := len(user_input)
+		if input_length == 0 {
 			continue
 		}
 		if _, exists := command_list[user_input[0]]; exists {
-			err := command_list[user_input[0]].callback(user_cfg)
-			if err != nil {
-				fmt.Println(err)
+			if input_length == 1 {
+				err := command_list[user_input[0]].callback(user_cfg, "")
+				if err != nil {
+					fmt.Println(err)
+				}
+				continue
 			}
-			continue
+			if input_length == 2 {
+				err := command_list[user_input[0]].callback(user_cfg, user_input[1])
+				if err != nil {
+					fmt.Println(err)
+				}
+				continue
+			}
+
+			fmt.Println("ERROR: Too many parameters. Use the 'help' command for proper usage guidance.")
 		} else {
 			fmt.Println("Unknown command")
 			continue
