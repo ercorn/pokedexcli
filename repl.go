@@ -63,6 +63,11 @@ func init_commands() {
 			description: "See the detail of a Pokemon you have caught",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "List of all the Pokemon you've caught",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -203,6 +208,14 @@ func commandInspect(cfg *config, parameter string) error {
 		return nil
 	}
 	return fmt.Errorf("you have not caught that pokemon")
+}
+
+func commandPokedex(cfg *config, parameter string) error {
+	fmt.Println("Your Pokedex:")
+	for name, _ := range cfg.pokemon_party {
+		fmt.Println(" -", name)
+	}
+	return nil
 }
 
 func startRepl(user_cfg *config) {
